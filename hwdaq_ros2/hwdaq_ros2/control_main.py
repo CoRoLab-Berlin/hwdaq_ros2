@@ -87,7 +87,7 @@ class pneumatic_arm_control(Node):
         :return: None
         """
         kp = 0.1
-        self.control_signal = kp * (self.des_values - self.data)
+        self.control_signal = kp * (self.des_values - self.data[:4])
 
     def save_data(self):
         self.get_logger().info("pneumatic_arm_control saving data")
