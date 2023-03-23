@@ -11,12 +11,12 @@ def pneumatic_arm_control(Node):
 
 def main():
     rclpy.init()
-    pneumatic_arm_control()
+    controller = pneumatic_arm_control()
     try:
-        rclpy.spin(pneumatic_arm_control)
+        rclpy.spin(controller)
     except KeyboardInterrupt:
         pass
-    pneumatic_arm_control.destroy_node()
+    controller.destroy_node()
     rclpy.shutdown()
 
 
