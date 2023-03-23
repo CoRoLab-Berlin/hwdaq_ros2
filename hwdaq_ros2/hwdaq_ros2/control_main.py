@@ -70,7 +70,7 @@ class pneumatic_arm_control(Node):
         self.time_last_des_values = (
             (msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9)
             if msg.header.stamp.sec != 0
-            else datetime.datetime.now().timestamp()
+            else self.get_clock().now().nanoseconds * 1e-9
         )
         self.des_values = msg.des_pressure
 
