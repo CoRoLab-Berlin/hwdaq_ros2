@@ -77,10 +77,10 @@ class pneumatic_arm_control(Node):
         Checks if the time of the last desired values message is ok
         :return: True if the time is ok
         """
-        time = self.get_clock().now().seconds_nanoseconds
-        return (
-            time[0] + time[1] * 1e-9 - self.time_last_des_values
-        ).total_seconds() < 0.5
+        time_now = (
+            self.get_clock().now().seconds + self.get_clock().now().nanoseconds * 1e-9
+        )
+        return (time_now - self.time_last_des_values).total_seconds() < 0.5
 
     def controller(self) -> None:
         """
