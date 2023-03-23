@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 
 
-def pneumatic_arm_control(Node):
+class pneumatic_arm_control(Node):
     def __init__(self):
         super().__init__("pneumatic_arm_control")
         self.get_logger().info("pneumatic_arm_control")
