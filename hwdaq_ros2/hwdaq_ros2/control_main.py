@@ -68,7 +68,9 @@ class pneumatic_arm_control(Node):
         self.get_logger().info("pneumatic_arm_control des_values_callback")
         # exat time of the message
         self.time_last_des_values = (
-            msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
+            (msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9)
+            if msg.header.stamp.sec != 0
+            else datetime.datetime.now().timestamp()
         )
         self.des_values = msg.des_pressure
 
