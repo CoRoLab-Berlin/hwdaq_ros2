@@ -49,6 +49,7 @@ class pneumatic_arm_control(Node):
 
         if not self.time_ok:
             self.des_values = np.zeros(4)
+            self.get_logger().warn("pneumatic_arm_control timing issue")
 
         self.controller()
         self.hwdaq.setDAC(self.control_signal.copy())
@@ -77,9 +78,7 @@ class pneumatic_arm_control(Node):
         Checks if the time of the last desired values message is ok
         :return: True if the time is ok
         """
-        time_now = (
-            self.get_clock().now().seconds + self.get_clock().now().nanoseconds * 1e-9
-        )
+        time_now = self.get_clock().now().nanoseconds * 1e-9
         return (time_now - self.time_last_des_values).total_seconds() < 0.5
 
     def controller(self) -> None:
