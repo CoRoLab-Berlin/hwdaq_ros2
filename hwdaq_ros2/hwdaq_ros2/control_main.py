@@ -5,7 +5,8 @@ import numpy as np
 import rclpy
 from hwdaq import HWDAQ
 from rclpy.node import Node
-from std_msgs.msg import Float64MultiArray
+
+from hwdaq_msgs.msg import HwdaqDesiredPressure, HwdaqMeasurements
 
 
 class pneumatic_arm_control(Node):
@@ -23,16 +24,17 @@ class pneumatic_arm_control(Node):
         self.control_loop = self.create_timer(1 / self.rate, self.hardware_rw_spi)
 
         self.measurments = self.create_publisher(
-            Float64MultiArray, "pneumatic_arm_measurments", 10
+            HwdaqMeasurements, "pneumatic_arm_measurments", 10
         )
 
         self.sub_controller = self.create_subscription(
-            Float64MultiArray,
+            HwdaqDesiredPressure,
             "pneumatic_arm_desired_values",
             self.des_values_callback,
             10,
         )
         self.sub_controller
+        self.time_last_des_values = 0
 
         self._data_complete = self.hwdaq.getADC().copy()
         self._control_signal_complete = self.control_signal.copy()
@@ -44,18 +46,40 @@ class pneumatic_arm_control(Node):
         """
         self.get_logger().info("pneumatic_arm_control")
         self.data = self.hwdaq.getADC().copy()
-        self.hwdaq.setDAC(self.control_signal)
-        self.measurments.publish(Float64MultiArray(data=self.data))
 
-    def des_values_callback(self, msg: Float64MultiArray) -> None:
+        if not self.time_ok:
+            self.des_values = np.zeros(4)
+
+        self.controller()
+        self.hwdaq.setDAC(self.control_signal.copy())
+
+        meas = HwdaqMeasurements()
+        meas.header.stamp = self.get_clock().now().to_msg()
+        meas.data = self.data.copy()
+        self.measurments.publish(meas)
+
+    def des_values_callback(self, msg: HwdaqDesiredPressure) -> None:
         """
         Callback function for the desired values
         :param msg: Desired values
         :return: None
         """
         self.get_logger().info("pneumatic_arm_control des_values_callback")
-        self.des_values = msg.data
-        self.controller()
+        # exat time of the message
+        self.time_last_des_values = (
+            msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
+        )
+        self.des_values = msg.des_pressure
+
+    @property
+    def time_ok(self) -> bool:
+        """
+        Checks if the time of the last desired values message is ok
+        :return: True if the time is ok
+        """
+        return (
+            datetime.datetime.now() - self.time_last_des_values
+        ).total_seconds() < 0.5
 
     def controller(self) -> None:
         """
