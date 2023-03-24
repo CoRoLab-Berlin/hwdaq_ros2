@@ -1,12 +1,9 @@
-import datetime
-
-import h5py
 import numpy as np
 import rclpy
 from hwdaq import HWDAQ
 from rclpy.node import Node
 
-from hwdaq_msgs.msg import HwdaqDesiredPressure, HwdaqMeasurements
+from hwdaq_msgs.msg import HwdaqDesiredPressure, HwdaqOutput
 
 
 class pneumatic_arm_control(Node):
@@ -14,6 +11,7 @@ class pneumatic_arm_control(Node):
     data = np.zeros(8)
     control_signal = np.zeros(4)
     des_values = np.zeros(4)
+    time_last_des_values = 0
 
     def __init__(self):
         super().__init__("pneumatic_arm_control")
@@ -24,7 +22,7 @@ class pneumatic_arm_control(Node):
         self.control_loop = self.create_timer(1 / self.rate, self.hardware_rw_spi)
 
         self.measurments = self.create_publisher(
-            HwdaqMeasurements, "pneumatic_arm_measurments", 10
+            HwdaqOutput, "pneumatic_arm_measurments", 10
         )
 
         self.sub_controller = self.create_subscription(
@@ -34,10 +32,6 @@ class pneumatic_arm_control(Node):
             10,
         )
         self.sub_controller
-        self.time_last_des_values = 0
-
-        self._data_complete = self.hwdaq.getADC().copy()
-        self._control_signal_complete = self.control_signal.copy()
 
     def hardware_rw_spi(self) -> None:
         """
@@ -47,16 +41,15 @@ class pneumatic_arm_control(Node):
         self.get_logger().info("pneumatic_arm_control")
         self.data = self.hwdaq.getADC().copy()
 
-        if not self.time_ok:
-            self.des_values = np.zeros(4)
-            self.get_logger().warn("pneumatic_arm_control timing issue")
-
         self.controller()
         self.hwdaq.setDAC(self.control_signal.copy())
 
-        meas = HwdaqMeasurements()
+        # Publish data for later analysis
+        meas = HwdaqOutput()
         meas.header.stamp = self.get_clock().now().to_msg()
-        meas.measurements = self.data.copy()
+        meas.meas_pressure = self.data[:2]
+        meas.meas_angle = self.data[4]
+        meas.dp_res = self.control_signal[:2]
         self.measurments.publish(meas)
 
     def des_values_callback(self, msg: HwdaqDesiredPressure) -> None:
@@ -72,7 +65,7 @@ class pneumatic_arm_control(Node):
             if msg.header.stamp.sec != 0
             else self.get_clock().now().nanoseconds * 1e-9
         )
-        self.des_values = msg.des_pressure
+        self.des_values[:2] = msg.des_pressure
 
     @property
     def time_ok(self) -> bool:
@@ -88,17 +81,14 @@ class pneumatic_arm_control(Node):
         P control for the pressure
         :return: None
         """
-        kp = 0.1
-        self.control_signal = kp * (self.des_values - self.data[:4])
-
-    def save_data(self):
-        self.get_logger().info("pneumatic_arm_control saving data")
-        # now = datetime.datetime.now()
-        # filename = now.strftime("%Y-%m-%d_%H-%M-%S") + ".h5"
-        # print(self.data_complete.shape)
-        # with h5py.File(filename, "w") as f:
-        #     f.create_dataset("data", data=self.data_complete)
-        #     f.create_dataset("control_signal", data=self.control_signal_complete)
+        kp_gain = 0.5
+        self.control_signal = kp_gain * (self.des_values - self.data[:4])
+        self.control_signal = np.clip(self.control_signal, 0, 10)
+        if not self.time_ok:
+            self.control_signal = np.ones(4) * 4.5
+            self.get_logger().warn(
+                "pneumatic_arm_control timing issue, setting to 4.5V"
+            )
 
 
 def main():
@@ -107,7 +97,7 @@ def main():
     try:
         rclpy.spin(controller)
     except KeyboardInterrupt:
-        controller.save_data()
+        pass
     controller.destroy_node()
     rclpy.shutdown()
 

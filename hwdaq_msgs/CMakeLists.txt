@@ -24,7 +24,7 @@ find_package(rosidl_default_generators REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/HwdaqMeasurements.msg"
+  "msg/HwdaqOutput.msg"
   "msg/HwdaqDesiredPressure.msg"
   DEPENDENCIES std_msgs   
 )
