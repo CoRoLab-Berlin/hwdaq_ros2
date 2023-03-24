@@ -86,8 +86,9 @@ class pneumatic_arm_control(Node):
         self.control_signal = np.clip(self.control_signal, 0, 10, dtype=np.float64)
         if not self.time_ok:
             self.control_signal = np.ones(4) * 4.5
-            self.get_logger().warn(
-                "pneumatic_arm_control timing issue, setting to 4.5V"
+            self.get_logger().warning(
+                "pneumatic_arm_control timing issue, setting to 4.5V",
+                throttle_duration_sec=5.0,
             )
 
 
