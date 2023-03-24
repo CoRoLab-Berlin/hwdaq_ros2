@@ -1,5 +1,5 @@
 std_msgs/Header header
-float64[4] des_pressure
+float64[2] des_pressure
 
 
 
