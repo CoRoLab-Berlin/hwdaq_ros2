@@ -83,7 +83,7 @@ class pneumatic_arm_control(Node):
         """
         kp_gain = 0.5
         self.control_signal = kp_gain * (self.des_values - self.data[:4])
-        self.control_signal = np.clip(self.control_signal, 0, 10)
+        self.control_signal = np.clip(self.control_signal, 0, 10, dtype=np.float64)
         if not self.time_ok:
             self.control_signal = np.ones(4) * 4.5
             self.get_logger().warn(
