@@ -32,13 +32,15 @@ class pneumatic_arm_control(Node):
             10,
         )
         self.sub_controller
+        self.get_logger().info(
+            "pneumatic_arm_control ready. running at " + str(self.rate) + " Hz"
+        )
 
     def hardware_rw_spi(self) -> None:
         """
         Main loop for the hardware. Reads the ADC and writes the DAC.
         :return: None
         """
-        self.get_logger().info("pneumatic_arm_control")
         self.data = self.hwdaq.getADC().copy()
 
         self.controller()
