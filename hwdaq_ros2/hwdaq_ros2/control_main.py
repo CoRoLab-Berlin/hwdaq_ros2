@@ -49,7 +49,7 @@ class pneumatic_arm_control(Node):
         meas.header.stamp = self.get_clock().now().to_msg()
         meas.meas_pressure = self.data[:2]
         meas.meas_angle = self.data[4]
-        meas.dp_res = self.control_signal[:2]
+        meas.dp_ref = self.control_signal[:2]
         self.measurments.publish(meas)
 
     def des_values_callback(self, msg: HwdaqDesiredPressure) -> None:
