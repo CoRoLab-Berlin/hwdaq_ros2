@@ -8,9 +8,9 @@ from hwdaq_msgs.msg import HwdaqDesiredPressure, HwdaqOutput
 
 class pneumatic_arm_control(Node):
     hwdaq = HWDAQ()
-    data = np.zeros(8)
-    control_signal = np.zeros(4)
-    des_values = np.zeros(4)
+    data = np.zeros(8, dtype=np.float64)
+    control_signal = np.zeros(4, dtype=np.float64)
+    des_values = np.zeros(4, dtype=np.float64)
     time_last_des_values = 0
 
     def __init__(self):
