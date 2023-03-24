@@ -84,6 +84,8 @@ class pneumatic_arm_control(Node):
         kp_gain = 0.5
         self.control_signal = kp_gain * (self.des_values - self.data[:4])
         self.control_signal = np.clip(self.control_signal, 0, 10, dtype=np.float64)
+
+        # set to 4.5V if no message is received for 0.5s to avoid unexpected behavior
         if not self.time_ok:
             self.control_signal = np.ones(4) * 4.5
             self.get_logger().warning(
