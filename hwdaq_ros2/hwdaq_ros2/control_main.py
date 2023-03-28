@@ -74,7 +74,7 @@ class pneumatic_arm_control(Node):
         :return: True if the time is ok
         """
         time_now = self.get_clock().now().nanoseconds * 1e-9
-        return (time_now - self.time_last_des_values) < 0.5
+        return (time_now - self.time_last_des_values) > 0.5
 
     def controller(self) -> None:
         """
